@@ -1,0 +1,47 @@
+error: lifetime may not live long enough
+  --> tests/compile_fail/invariant.rs:10:5
+   |
+ 9 | fn shorten_producer<'a>(p: Producer<&'static str>) -> Producer<&'a str> {
+   |                     -- lifetime `'a` defined here
+10 |     p
+   |     ^ returning this value requires that `'a` must outlive `'static`
+   |
+   = note: requirement occurs because of the type `Producer<&str>`, which makes the generic argument `&str` invariant
+   = note: the struct `Producer<T>` is invariant over the parameter `T`
+   = help: see <https://doc.rust-lang.org/nomicon/subtyping.html> for more information about variance
+
+error: lifetime may not live long enough
+  --> tests/compile_fail/invariant.rs:14:5
+   |
+13 | fn lengthen_producer<'a>(p: Producer<&'a str>) -> Producer<&'static str> {
+   |                      -- lifetime `'a` defined here
+14 |     p
+   |     ^ returning this value requires that `'a` must outlive `'static`
+   |
+   = note: requirement occurs because of the type `Producer<&str>`, which makes the generic argument `&str` invariant
+   = note: the struct `Producer<T>` is invariant over the parameter `T`
+   = help: see <https://doc.rust-lang.org/nomicon/subtyping.html> for more information about variance
+
+error: lifetime may not live long enough
+  --> tests/compile_fail/invariant.rs:18:5
+   |
+17 | fn shorten_consumer<'a>(c: Consumer<&'static str>) -> Consumer<&'a str> {
+   |                     -- lifetime `'a` defined here
+18 |     c
+   |     ^ returning this value requires that `'a` must outlive `'static`
+   |
+   = note: requirement occurs because of the type `Consumer<&str>`, which makes the generic argument `&str` invariant
+   = note: the struct `Consumer<T>` is invariant over the parameter `T`
+   = help: see <https://doc.rust-lang.org/nomicon/subtyping.html> for more information about variance
+
+error: lifetime may not live long enough
+  --> tests/compile_fail/invariant.rs:22:5
+   |
+21 | fn lengthen_consumer<'a>(c: Consumer<&'a str>) -> Consumer<&'static str> {
+   |                      -- lifetime `'a` defined here
+22 |     c
+   |     ^ returning this value requires that `'a` must outlive `'static`
+   |
+   = note: requirement occurs because of the type `Consumer<&str>`, which makes the generic argument `&str` invariant
+   = note: the struct `Consumer<T>` is invariant over the parameter `T`
+   = help: see <https://doc.rust-lang.org/nomicon/subtyping.html> for more information about variance

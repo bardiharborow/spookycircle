@@ -1,0 +1,23 @@
+error: lifetime may not live long enough
+ --> tests/compile_fail_core/borrowed_invariant.rs:7:5
+  |
+6 | fn shorten_producer<'q, 'a>(p: BorrowedProducer<'q, &'static str>) -> BorrowedProducer<'q, &'a str> {
+  |                         -- lifetime `'a` defined here
+7 |     p
+  |     ^ returning this value requires that `'a` must outlive `'static`
+  |
+  = note: requirement occurs because of the type `BorrowedProducer<'_, &str>`, which makes the generic argument `&str` invariant
+  = note: the struct `BorrowedProducer<'queue, T>` is invariant over the parameter `T`
+  = help: see <https://doc.rust-lang.org/nomicon/subtyping.html> for more information about variance
+
+error: lifetime may not live long enough
+  --> tests/compile_fail_core/borrowed_invariant.rs:11:5
+   |
+10 | fn lengthen_consumer<'q, 'a>(c: BorrowedConsumer<'q, &'a str>) -> BorrowedConsumer<'q, &'static str> {
+   |                          -- lifetime `'a` defined here
+11 |     c
+   |     ^ returning this value requires that `'a` must outlive `'static`
+   |
+   = note: requirement occurs because of the type `BorrowedConsumer<'_, &str>`, which makes the generic argument `&str` invariant
+   = note: the struct `BorrowedConsumer<'queue, T>` is invariant over the parameter `T`
+   = help: see <https://doc.rust-lang.org/nomicon/subtyping.html> for more information about variance

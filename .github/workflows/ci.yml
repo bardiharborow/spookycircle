@@ -1,0 +1,319 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+
+jobs:
+  test:
+    name: test (${{ matrix.toolchain }}, ${{ matrix.os }}, ${{ matrix.features.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Exact MSRV, and current stable on every certified-or-candidate
+        # family: x86_64 Linux, aarch64 Linux (weakly ordered), aarch64
+        # macOS, x86_64 Windows.
+        os: [ubuntu-latest]
+        toolchain: ["1.88.0", stable]
+        # Feature matrix.
+        features:
+          - { name: core-only, flags: "--no-default-features" }
+          - { name: default, flags: "" }
+          - { name: all, flags: "--all-features" }
+          - { name: shared-only, flags: "--no-default-features --features shared-memory" }
+        include:
+          - { os: ubuntu-24.04-arm, toolchain: stable, features: { name: all, flags: "--all-features" } }
+          - { os: macos-latest, toolchain: stable, features: { name: all, flags: "--all-features" } }
+          - { os: windows-latest, toolchain: stable, features: { name: all, flags: "--all-features" } }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          # The compile-fail `.stderr` files include snippets of std source,
+          # which rustc prints only when `rust-src` is installed.
+          components: rust-src
+      - run: cargo build --locked ${{ matrix.features.flags }}
+      - run: cargo test --locked ${{ matrix.features.flags }}
+      # Stress and the two-process shared-memory tests, optimized.
+      - run: cargo test --locked --release ${{ matrix.features.flags }} --test stress --test shared_process
+      - name: compile-fail cases (stable only; diagnostics are version-specific)
+        if: matrix.toolchain == 'stable' && matrix.os == 'ubuntu-latest'
+        run: cargo test --locked ${{ matrix.features.flags }} --test traits
+        env:
+          SPOOKYCIRCLE_COMPILE_FAIL: "1"
+
+  shared-memory-example:
+    name: shared-memory example (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      # Two processes, one file mapped with MAP_SHARED at different addresses.
+      - run: cargo run --locked --release --features shared-memory --example shared_memory
+
+  advisory:
+    name: advisory (${{ matrix.toolchain }})
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        toolchain: [beta, nightly]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+      - run: cargo test --locked --all-features
+
+  no_std:
+    name: no_std (thumbv7em-none-eabihf)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv7em-none-eabihf
+          components: llvm-tools
+      - run: cargo build --locked --lib --target thumbv7em-none-eabihf --no-default-features
+      - run: cargo build --locked --lib --target thumbv7em-none-eabihf --no-default-features --features shared-memory
+      # Optional `no_std + alloc`.
+      - run: cargo build --locked --lib --target thumbv7em-none-eabihf
+      # Allocator-free program that actually links (no global allocator),
+      # followed by a symbol audit of the image.
+      - run: cargo xtask check-symbols
+
+  unsupported-targets:
+    name: unsupported targets are rejected
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: thumbv6m-none-eabi
+          components: rust-src
+      # No pointer-width compare-and-swap: the crate must refuse to build,
+      # with its own message, rather than emulate atomics.
+      - name: thumbv6m-none-eabi (no ptr-width atomic RMW)
+        run: |
+          if cargo build --lib --target thumbv6m-none-eabi --no-default-features 2> err.txt; then
+            echo "unexpectedly built"; exit 1
+          fi
+          grep -q "requires pointer-width atomic" err.txt
+      # 16-bit pointers: the shared-memory feature must refuse to build with
+      # its own message (it also lacks the atomics).
+      - name: msp430-none-elf (16-bit pointers)
+        run: |
+          if cargo build --lib -Zbuild-std=core --target msp430-none-elf --no-default-features --features shared-memory 2> err.txt; then
+            echo "unexpectedly built"; exit 1
+          fi
+          grep -q "shared-memory. feature requires a 32-bit or 64-bit" err.txt
+
+  lint:
+    name: fmt, clippy, rustdoc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: cargo fmt --all -- --check
+      - run: cargo fmt --manifest-path ci/embedded/Cargo.toml -- --check
+      - run: cargo fmt --manifest-path ci/codegen/Cargo.toml -- --check
+      - run: cargo clippy --locked --package xtask -- -D warnings
+      - run: cargo clippy --locked --manifest-path ci/codegen/Cargo.toml -- -D warnings
+      - run: cargo clippy --locked --all-targets --all-features -- -D warnings
+      - run: cargo clippy --locked --lib --no-default-features -- -D warnings
+      - run: cargo clippy --locked --lib --no-default-features --features shared-memory -- -D warnings
+      - run: cargo doc --locked --no-deps --all-features
+      - run: cargo doc --locked --no-deps --no-default-features
+
+  miri:
+    name: miri (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    # Split three ways so the runs proceed in parallel; together they took
+    # well over the time any one of them needs.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Focused sequential, drop, peek, zero-sized, wrap,
+          # storage-lifecycle, and shared-format tests under both aliasing
+          # models, for every storage mode. The multi-threaded stress suite
+          # and the two-process tests are excluded (too slow under
+          # interpretation, or need `mmap`).
+          - name: stacked borrows
+            tests: --lib --test deterministic --test allocator --test storage --test shared_format
+            miriflags: ""
+          - name: tree borrows
+            tests: --lib --test deterministic --test allocator --test storage --test shared_format
+            miriflags: -Zmiri-tree-borrows
+          # proptest reads the working directory for failure persistence,
+          # which Miri's isolation forbids; the queue itself needs no
+          # isolation escape. Each case takes tens of seconds under Miri, so
+          # only a few run here; the native test job runs the full 512.
+          - name: model
+            tests: --test model
+            miriflags: -Zmiri-disable-isolation
+            proptest-cases: "4"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri
+      - run: cargo miri setup
+      # No pointer may rely on exposed provenance: an `as` cast between a
+      # pointer and an integer fails to compile. (No `-D warnings` here:
+      # test crates that compile empty without `--cfg loom` report the
+      # injected feature's lint as unknown.) Runs once, not per Miri job.
+      - name: strict provenance lint
+        if: matrix.name == 'stacked borrows'
+        run: cargo check --locked --all-features --all-targets
+        env:
+          RUSTFLAGS: -Zcrate-attr=feature(strict_provenance_lints) -D implicit_provenance_casts
+      # Every run also enforces strict provenance (integer-to-pointer casts
+      # are errors) and symbolic alignment (an access is aligned only if
+      # the allocation's alignment guarantees it, not by chance).
+      - run: cargo miri test --all-features ${{ matrix.tests }}
+        env:
+          MIRIFLAGS: ${{ matrix.miriflags }} -Zmiri-strict-provenance -Zmiri-symbolic-alignment-check
+          PROPTEST_CASES: ${{ matrix.proptest-cases }}
+
+  loom:
+    name: loom model checking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      # `--lib` runs the shared-region protocol models in src/shared_memory/protocol.rs.
+      - run: cargo test --locked --release --all-features --lib --test loom
+        env:
+          RUSTFLAGS: --cfg loom -D warnings
+      # The lint job builds without `--cfg loom`, where tests/loom.rs is
+      # empty and the Loom-only paths in src/ are compiled out.
+      - run: cargo clippy --locked --all-features --lib --tests -- -D warnings
+        env:
+          RUSTFLAGS: --cfg loom
+
+  loom-mutants:
+    name: loom ordering mutants
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      # Weakens each essential acquire/release in src/raw/ and
+      # src/shared_memory/, breaks each claim, and runs the narrow-counter
+      # negative control, requiring the suites to fail for every mutant.
+      - run: cargo xtask loom-mutants
+
+  kani:
+    name: kani proofs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # Proves the physical-index and sequence arithmetic over the full
+      # `usize` range (src/raw/mod.rs) and shared-region `layout` and
+      # header validation for every input (src/shared_memory/region.rs).
+      # Kani brings its own pinned nightly toolchain and CBMC.
+      - uses: model-checking/kani-github-action@v1
+        with:
+          kani-version: "0.68.0"
+          args: --lib --features shared-memory
+      # The lint job builds without `--cfg kani`, where the proof modules are
+      # compiled out; this runs Clippy on them with Kani's toolchain.
+      - run: cargo xtask clippy-kani
+
+  sanitizers:
+    name: ${{ matrix.sanitizer }} sanitizer (x86_64-unknown-linux-gnu)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { sanitizer: thread, tests: "--test stress --test deterministic --test storage" }
+          - { sanitizer: address, tests: "--test deterministic --test model --test allocator --test storage --test shared_format" }
+          - { sanitizer: leak, tests: "--test deterministic --test model --test allocator --test storage --test shared_format" }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
+      - run: >-
+          cargo test --locked -Zbuild-std --target x86_64-unknown-linux-gnu
+          --release --all-features ${{ matrix.tests }}
+        env:
+          RUSTFLAGS: -Zsanitizer=${{ matrix.sanitizer }} -D warnings
+          PROPTEST_CASES: "64"
+
+  codegen:
+    name: codegen audit (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu }
+          - { os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
+          - { os: macos-latest, target: aarch64-apple-darwin }
+          # The assembly does not depend on the host, so the other tier-1
+          # targets are cross-compiled (the task skips linking).
+          - { os: ubuntu-latest, target: i686-unknown-linux-gnu }
+          - { os: ubuntu-latest, target: x86_64-pc-windows-msvc }
+          - { os: ubuntu-latest, target: x86_64-pc-windows-gnu }
+          - { os: ubuntu-latest, target: aarch64-pc-windows-msvc }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: cargo xtask inspect-codegen ${{ matrix.target }}
+
+  bench-build:
+    name: benchmarks compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo bench --locked --all-features --no-run

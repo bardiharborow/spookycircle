@@ -1,0 +1,30 @@
+# Code-generation audit target.
+#
+# A standalone crate (its own workspace) so that emitting assembly for a
+# cross target builds only `spookycircle`, not the root crate's
+# dev-dependencies, whose build scripts need a C or Windows toolchain for
+# that target:
+#
+#     cargo xtask inspect-codegen [target-triple]   # from the repository root
+[package]
+name = "codegen"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+spookycircle = { path = "../..", features = ["shared-memory"] }
+
+[lints.rust]
+rust_2018_idioms = { level = "warn", priority = -1 }
+unused_qualifications = "warn"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+# `p`/`c` for producer/consumer pairs, as in the root crate.
+many_single_char_names = "allow"
+similar_names = "allow"
+
+[workspace]

@@ -1,0 +1,15 @@
+# Development tasks (benchmark regression, codegen audit, Loom mutants,
+# embedded symbol audit, Clippy on Kani proofs), run as
+# `cargo xtask <task>`; see `src/main.rs`.
+# Never published, and not a dependency of the library.
+[package]
+name = "xtask"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+regex = "1"
+serde_json = "1"

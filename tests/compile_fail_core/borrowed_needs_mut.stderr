@@ -1,0 +1,65 @@
+error[E0596]: cannot borrow `*p` as mutable, as it is behind a `&` reference
+ --> tests/compile_fail_core/borrowed_needs_mut.rs:9:5
+  |
+9 |     p.try_push(1).ok();
+  |     ^ `p` is a `&` reference, so it cannot be borrowed as mutable
+  |
+help: consider changing this to be a mutable reference
+  |
+7 |     let p = &mut producer;
+  |              +++
+
+error[E0596]: cannot borrow `*p` as mutable, as it is behind a `&` reference
+  --> tests/compile_fail_core/borrowed_needs_mut.rs:10:5
+   |
+10 |     p.push_slice(&[1, 2]);
+   |     ^ `p` is a `&` reference, so it cannot be borrowed as mutable
+   |
+help: consider changing this to be a mutable reference
+   |
+ 7 |     let p = &mut producer;
+   |              +++
+
+error[E0596]: cannot borrow `*c` as mutable, as it is behind a `&` reference
+  --> tests/compile_fail_core/borrowed_needs_mut.rs:11:5
+   |
+11 |     c.try_pop();
+   |     ^ `c` is a `&` reference, so it cannot be borrowed as mutable
+   |
+help: consider changing this to be a mutable reference
+   |
+ 8 |     let c = &mut consumer;
+   |              +++
+
+error[E0596]: cannot borrow `*c` as mutable, as it is behind a `&` reference
+  --> tests/compile_fail_core/borrowed_needs_mut.rs:12:5
+   |
+12 |     c.peek();
+   |     ^ `c` is a `&` reference, so it cannot be borrowed as mutable
+   |
+help: consider changing this to be a mutable reference
+   |
+ 8 |     let c = &mut consumer;
+   |              +++
+
+error[E0596]: cannot borrow `*c` as mutable, as it is behind a `&` reference
+  --> tests/compile_fail_core/borrowed_needs_mut.rs:13:5
+   |
+13 |     c.peek_mut();
+   |     ^ `c` is a `&` reference, so it cannot be borrowed as mutable
+   |
+help: consider changing this to be a mutable reference
+   |
+ 8 |     let c = &mut consumer;
+   |              +++
+
+error[E0596]: cannot borrow `*c` as mutable, as it is behind a `&` reference
+  --> tests/compile_fail_core/borrowed_needs_mut.rs:14:5
+   |
+14 |     c.pop_slice(&mut [0; 2]);
+   |     ^ `c` is a `&` reference, so it cannot be borrowed as mutable
+   |
+help: consider changing this to be a mutable reference
+   |
+ 8 |     let c = &mut consumer;
+   |              +++

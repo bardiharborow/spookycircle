@@ -1,0 +1,11 @@
+error[E0599]: no method named `clone` found for struct `Producer<T>` in the current scope
+ --> tests/compile_fail/not_clone.rs:6:24
+  |
+6 |     let _p2 = producer.clone();
+  |                        ^^^^^ method not found in `Producer<u8>`
+
+error[E0599]: no method named `clone` found for struct `Consumer<T>` in the current scope
+ --> tests/compile_fail/not_clone.rs:7:24
+  |
+7 |     let _c2 = consumer.clone();
+  |                        ^^^^^ method not found in `Consumer<u8>`

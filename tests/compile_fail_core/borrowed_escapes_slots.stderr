@@ -1,0 +1,11 @@
+error[E0597]: `slots` does not live long enough
+  --> tests/compile_fail_core/borrowed_escapes_slots.rs:8:40
+   |
+ 7 |         let mut slots = [const { Slot::<u8>::new() }; 2];
+   |             --------- binding `slots` declared here
+ 8 |         storage = BorrowedStorage::new(&mut slots).unwrap();
+   |                                        ^^^^^^^^^^ borrowed value does not live long enough
+ 9 |     }
+   |     - `slots` dropped here while still borrowed
+10 |     let (mut producer, _consumer) = storage.try_split().unwrap();
+   |                                     ------- borrow later used here

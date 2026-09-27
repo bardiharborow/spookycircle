@@ -1,0 +1,11 @@
+error[E0505]: cannot move out of `storage` because it is borrowed
+ --> tests/compile_fail_core/move_while_split.rs:7:26
+  |
+5 |     let storage = StaticStorage::<u8, 2>::new();
+  |         ------- binding `storage` declared here
+6 |     let (mut producer, _consumer) = storage.try_split().unwrap();
+  |                                     ------- borrow of `storage` occurs here
+7 |     let moved = Box::new(storage);
+  |                          ^^^^^^^ move out of `storage` occurs here
+8 |     producer.try_push(1).unwrap();
+  |     -------- borrow later used here

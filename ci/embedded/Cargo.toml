@@ -1,0 +1,27 @@
+# Allocator-free `no_std` link test.
+#
+# A standalone crate (its own workspace) so that it can be built for a bare
+# embedded target with no global allocator, panic runtime, or `std`:
+#
+#     cd ci/embedded && cargo build --release
+#     cargo xtask check-symbols   # from the repository root
+[package]
+name = "spookycircle-embedded"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+spookycircle = { path = "../..", default-features = false, features = ["shared-memory"] }
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+debug = true
+
+[workspace]

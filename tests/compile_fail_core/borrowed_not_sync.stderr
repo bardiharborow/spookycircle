@@ -1,0 +1,161 @@
+error[E0277]: `NonNull<Atomic<usize>>` cannot be shared between threads safely
+ --> tests/compile_fail_core/borrowed_not_sync.rs:9:17
+  |
+9 |         s.spawn(|| producer.len());
+  |           ----- ^^^^^^^^^^^^^^^^^ `NonNull<Atomic<usize>>` cannot be shared between threads safely
+  |           |
+  |           required by a bound introduced by this call
+  |
+  = help: within `BorrowedProducer<'_, u8>`, the trait `Sync` is not implemented for `NonNull<Atomic<usize>>`
+note: required because it appears within the type `spookycircle::raw::QueueRef<u8, usize, spookycircle::raw::typed::TypedLife<usize, spookycircle::raw::typed::CallerOwned>>`
+ --> src/raw/mod.rs
+  |
+  | struct QueueRef<T, S: Sequence, L> {
+  |        ^^^^^^^^
+note: required because it appears within the type `spookycircle::raw::RawProducer<u8, usize, spookycircle::raw::typed::TypedLife<usize, spookycircle::raw::typed::CallerOwned>>`
+ --> src/raw/mod.rs
+  |
+  | pub(crate) struct RawProducer<T, S: Sequence, L: Lifecycle<T, S>> {
+  |                   ^^^^^^^^^^^
+note: required because it appears within the type `BorrowedProducer<'_, u8>`
+ --> src/storage.rs
+  |
+  | pub struct BorrowedProducer<'queue, T> {
+  |            ^^^^^^^^^^^^^^^^
+  = note: required for `&BorrowedProducer<'_, u8>` to implement `Send`
+note: required because it's used within this closure
+ --> tests/compile_fail_core/borrowed_not_sync.rs:9:17
+  |
+9 |         s.spawn(|| producer.len());
+  |                 ^^
+note: required by a bound in `Scope::<'scope, 'env>::spawn`
+ --> $RUST/std/src/thread/scoped.rs
+  |
+  |     pub fn spawn<F, T>(&'scope self, f: F) -> ScopedJoinHandle<'scope, T>
+  |            ----- required by a bound in this associated function
+  |     where
+  |         F: FnOnce() -> T + Send + 'scope,
+  |                            ^^^^ required by this bound in `Scope::<'scope, 'env>::spawn`
+
+error[E0277]: `NonNull<Slot<u8>>` cannot be shared between threads safely
+ --> tests/compile_fail_core/borrowed_not_sync.rs:9:17
+  |
+9 |         s.spawn(|| producer.len());
+  |           ----- ^^^^^^^^^^^^^^^^^ `NonNull<Slot<u8>>` cannot be shared between threads safely
+  |           |
+  |           required by a bound introduced by this call
+  |
+  = help: within `BorrowedProducer<'_, u8>`, the trait `Sync` is not implemented for `NonNull<Slot<u8>>`
+note: required because it appears within the type `spookycircle::raw::QueueRef<u8, usize, spookycircle::raw::typed::TypedLife<usize, spookycircle::raw::typed::CallerOwned>>`
+ --> src/raw/mod.rs
+  |
+  | struct QueueRef<T, S: Sequence, L> {
+  |        ^^^^^^^^
+note: required because it appears within the type `spookycircle::raw::RawProducer<u8, usize, spookycircle::raw::typed::TypedLife<usize, spookycircle::raw::typed::CallerOwned>>`
+ --> src/raw/mod.rs
+  |
+  | pub(crate) struct RawProducer<T, S: Sequence, L: Lifecycle<T, S>> {
+  |                   ^^^^^^^^^^^
+note: required because it appears within the type `BorrowedProducer<'_, u8>`
+ --> src/storage.rs
+  |
+  | pub struct BorrowedProducer<'queue, T> {
+  |            ^^^^^^^^^^^^^^^^
+  = note: required for `&BorrowedProducer<'_, u8>` to implement `Send`
+note: required because it's used within this closure
+ --> tests/compile_fail_core/borrowed_not_sync.rs:9:17
+  |
+9 |         s.spawn(|| producer.len());
+  |                 ^^
+note: required by a bound in `Scope::<'scope, 'env>::spawn`
+ --> $RUST/std/src/thread/scoped.rs
+  |
+  |     pub fn spawn<F, T>(&'scope self, f: F) -> ScopedJoinHandle<'scope, T>
+  |            ----- required by a bound in this associated function
+  |     where
+  |         F: FnOnce() -> T + Send + 'scope,
+  |                            ^^^^ required by this bound in `Scope::<'scope, 'env>::spawn`
+
+error[E0277]: `Cell<()>` cannot be shared between threads safely
+ --> tests/compile_fail_core/borrowed_not_sync.rs:9:17
+  |
+9 |         s.spawn(|| producer.len());
+  |           ----- ^^^^^^^^^^^^^^^^^ `Cell<()>` cannot be shared between threads safely
+  |           |
+  |           required by a bound introduced by this call
+  |
+  = help: within `BorrowedProducer<'_, u8>`, the trait `Sync` is not implemented for `Cell<()>`
+  = note: if you want to do aliasing and mutation between multiple threads, use `std::sync::RwLock`
+note: required because it appears within the type `PhantomData<Cell<()>>`
+ --> $RUST/core/src/marker.rs
+  |
+  | pub struct PhantomData<T: PointeeSized>;
+  |            ^^^^^^^^^^^
+note: required because it appears within the type `spookycircle::raw::RawProducer<u8, usize, spookycircle::raw::typed::TypedLife<usize, spookycircle::raw::typed::CallerOwned>>`
+ --> src/raw/mod.rs
+  |
+  | pub(crate) struct RawProducer<T, S: Sequence, L: Lifecycle<T, S>> {
+  |                   ^^^^^^^^^^^
+note: required because it appears within the type `BorrowedProducer<'_, u8>`
+ --> src/storage.rs
+  |
+  | pub struct BorrowedProducer<'queue, T> {
+  |            ^^^^^^^^^^^^^^^^
+  = note: required for `&BorrowedProducer<'_, u8>` to implement `Send`
+note: required because it's used within this closure
+ --> tests/compile_fail_core/borrowed_not_sync.rs:9:17
+  |
+9 |         s.spawn(|| producer.len());
+  |                 ^^
+note: required by a bound in `Scope::<'scope, 'env>::spawn`
+ --> $RUST/std/src/thread/scoped.rs
+  |
+  |     pub fn spawn<F, T>(&'scope self, f: F) -> ScopedJoinHandle<'scope, T>
+  |            ----- required by a bound in this associated function
+  |     where
+  |         F: FnOnce() -> T + Send + 'scope,
+  |                            ^^^^ required by this bound in `Scope::<'scope, 'env>::spawn`
+
+error[E0277]: `NonNull<spookycircle::raw::typed::Control<usize>>` cannot be shared between threads safely
+ --> tests/compile_fail_core/borrowed_not_sync.rs:9:17
+  |
+9 |         s.spawn(|| producer.len());
+  |           ----- ^^^^^^^^^^^^^^^^^ `NonNull<spookycircle::raw::typed::Control<usize>>` cannot be shared between threads safely
+  |           |
+  |           required by a bound introduced by this call
+  |
+  = help: within `BorrowedProducer<'_, u8>`, the trait `Sync` is not implemented for `NonNull<spookycircle::raw::typed::Control<usize>>`
+note: required because it appears within the type `spookycircle::raw::typed::TypedLife<usize, spookycircle::raw::typed::CallerOwned>`
+ --> src/raw/typed.rs
+  |
+  | pub(crate) struct TypedLife<S: Sequence, O: Owner> {
+  |                   ^^^^^^^^^
+note: required because it appears within the type `spookycircle::raw::QueueRef<u8, usize, spookycircle::raw::typed::TypedLife<usize, spookycircle::raw::typed::CallerOwned>>`
+ --> src/raw/mod.rs
+  |
+  | struct QueueRef<T, S: Sequence, L> {
+  |        ^^^^^^^^
+note: required because it appears within the type `spookycircle::raw::RawProducer<u8, usize, spookycircle::raw::typed::TypedLife<usize, spookycircle::raw::typed::CallerOwned>>`
+ --> src/raw/mod.rs
+  |
+  | pub(crate) struct RawProducer<T, S: Sequence, L: Lifecycle<T, S>> {
+  |                   ^^^^^^^^^^^
+note: required because it appears within the type `BorrowedProducer<'_, u8>`
+ --> src/storage.rs
+  |
+  | pub struct BorrowedProducer<'queue, T> {
+  |            ^^^^^^^^^^^^^^^^
+  = note: required for `&BorrowedProducer<'_, u8>` to implement `Send`
+note: required because it's used within this closure
+ --> tests/compile_fail_core/borrowed_not_sync.rs:9:17
+  |
+9 |         s.spawn(|| producer.len());
+  |                 ^^
+note: required by a bound in `Scope::<'scope, 'env>::spawn`
+ --> $RUST/std/src/thread/scoped.rs
+  |
+  |     pub fn spawn<F, T>(&'scope self, f: F) -> ScopedJoinHandle<'scope, T>
+  |            ----- required by a bound in this associated function
+  |     where
+  |         F: FnOnce() -> T + Send + 'scope,
+  |                            ^^^^ required by this bound in `Scope::<'scope, 'env>::spawn`

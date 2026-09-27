@@ -1,0 +1,9 @@
+error[E0502]: cannot borrow `slots[_]` as immutable because it is also borrowed as mutable
+ --> tests/compile_fail_core/slots_reborrowed.rs:7:17
+  |
+6 |     let storage = BorrowedStorage::new(&mut slots).unwrap();
+  |                                        ---------- mutable borrow occurs here
+7 |     let again = &slots[0];
+  |                 ^^^^^^^^^ immutable borrow occurs here
+8 |     let _ = storage.try_split();
+  |             ------- mutable borrow later used here

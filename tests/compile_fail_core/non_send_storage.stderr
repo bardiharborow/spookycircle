@@ -1,0 +1,38 @@
+error[E0277]: `Rc<u8>` cannot be sent between threads safely
+ --> tests/compile_fail_core/non_send_storage.rs:6:17
+  |
+6 | static STORAGE: StaticStorage<Rc<u8>, 2> = StaticStorage::new();
+  |                 ^^^^^^^^^^^^^^^^^^^^^^^^ `Rc<u8>` cannot be sent between threads safely
+  |
+  = help: the trait `Send` is not implemented for `Rc<u8>`
+  = note: required for `StaticStorage<Rc<u8>, 2>` to implement `Sync`
+  = note: shared static variables must have a type that implements `Sync`
+
+error[E0277]: `Rc<u8>` cannot be sent between threads safely
+  --> tests/compile_fail_core/non_send_storage.rs:13:17
+   |
+13 |         s.spawn(move || producer.try_push(Rc::new(1)).ok());
+   |           ----- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `Rc<u8>` cannot be sent between threads safely
+   |           |
+   |           required by a bound introduced by this call
+   |
+   = help: the trait `Send` is not implemented for `Rc<u8>`
+   = note: required for `spookycircle::raw::RawProducer<Rc<u8>, usize, spookycircle::raw::typed::TypedLife<usize, spookycircle::raw::typed::CallerOwned>>` to implement `Send`
+note: required because it appears within the type `BorrowedProducer<'_, Rc<u8>>`
+  --> src/storage.rs
+   |
+   | pub struct BorrowedProducer<'queue, T> {
+   |            ^^^^^^^^^^^^^^^^
+note: required because it's used within this closure
+  --> tests/compile_fail_core/non_send_storage.rs:13:17
+   |
+13 |         s.spawn(move || producer.try_push(Rc::new(1)).ok());
+   |                 ^^^^^^^
+note: required by a bound in `Scope::<'scope, 'env>::spawn`
+  --> $RUST/std/src/thread/scoped.rs
+   |
+   |     pub fn spawn<F, T>(&'scope self, f: F) -> ScopedJoinHandle<'scope, T>
+   |            ----- required by a bound in this associated function
+   |     where
+   |         F: FnOnce() -> T + Send + 'scope,
+   |                            ^^^^ required by this bound in `Scope::<'scope, 'env>::spawn`

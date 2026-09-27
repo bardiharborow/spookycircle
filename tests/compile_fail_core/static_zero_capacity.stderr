@@ -1,0 +1,22 @@
+error[E0080]: evaluation panicked: `StaticStorage` capacity `N` must be at least 1
+ --> $RUST/core/src/panic.rs
+  |
+  |         $crate::panicking::panic_fmt($crate::const_format_args!($($t)+));
+  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `spookycircle::StaticStorage::<u32, 0>::new::{constant#0}` failed here
+  |
+ ::: src/storage.rs
+  |
+  |                 assert!(N != 0, "`StaticStorage` capacity `N` must be at least 1");
+  |                 ------------------------------------------------------------------ in this macro invocation
+
+note: erroneous constant encountered
+ --> src/storage.rs
+  |
+  | /             const {
+  | |                 assert!(N != 0, "`StaticStorage` capacity `N` must be at least 1");
+  | |                 assert!(
+  | |                     N <= MAX_CAPACITY,
+  | |                     "`StaticStorage` capacity `N` exceeds `MAX_CAPACITY`"
+  | |                 );
+  | |             }
+  | |_____________^

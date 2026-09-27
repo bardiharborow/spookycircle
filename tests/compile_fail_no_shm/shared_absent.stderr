@@ -1,0 +1,15 @@
+error[E0432]: unresolved import `spookycircle::shared_memory`
+ --> tests/compile_fail_no_shm/shared_absent.rs:3:5
+  |
+3 | use spookycircle::shared_memory;
+  |     ^^^^^^^^^^^^^^-------------
+  |                   |
+  |                   no `shared_memory` in the root
+  |
+note: found an item that was configured out
+ --> src/lib.rs
+  |
+  | #[cfg(feature = "shared-memory")]
+  |       ------------------------- the item is gated behind the `shared-memory` feature
+  | pub mod shared_memory;
+  |         ^^^^^^^^^^^^^

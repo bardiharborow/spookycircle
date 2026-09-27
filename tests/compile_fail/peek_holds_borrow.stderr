@@ -1,0 +1,19 @@
+error[E0499]: cannot borrow `consumer` as mutable more than once at a time
+  --> tests/compile_fail/peek_holds_borrow.rs:10:5
+   |
+ 9 |     let head = consumer.peek().unwrap();
+   |                -------- first mutable borrow occurs here
+10 |     consumer.try_pop();
+   |     ^^^^^^^^ second mutable borrow occurs here
+11 |     println!("{head}");
+   |                ---- first borrow later used here
+
+error[E0499]: cannot borrow `consumer` as mutable more than once at a time
+  --> tests/compile_fail/peek_holds_borrow.rs:14:5
+   |
+13 |     let head_mut = consumer.peek_mut().unwrap();
+   |                    -------- first mutable borrow occurs here
+14 |     consumer.try_pop();
+   |     ^^^^^^^^ second mutable borrow occurs here
+15 |     head_mut.push('x');
+   |     -------- first borrow later used here

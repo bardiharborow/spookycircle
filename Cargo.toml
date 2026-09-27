@@ -1,0 +1,93 @@
+[package]
+name = "spookycircle"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+description = "Bounded, wait-free single-producer/single-consumer FIFO ring buffer for no_std: heap-owned, borrowed, static, and shared-memory storage"
+categories = ["concurrency", "data-structures", "no-std"]
+keywords = ["spsc", "ring-buffer", "wait-free", "lock-free", "queue"]
+readme = "README.md"
+exclude = [".idea/", ".github/", ".cargo/"]
+
+[features]
+default = ["alloc"]
+# Heap-owned queues: `bounded`, `Producer`, `Consumer`.
+alloc = []
+# Caller-owned shared-memory regions (`shared_memory` module). Does not
+# enable `alloc` or `std`.
+shared-memory = []
+
+# Development tasks (`cargo xtask`); `ci/embedded` is its own workspace.
+[workspace]
+members = ["xtask"]
+
+[dependencies]
+
+[dev-dependencies]
+proptest = "1"
+trybuild = "1"
+criterion = "0.8"
+rtrb = "0.4"
+core_affinity = "0.8"
+
+# `mmap` for the guard-page and two-process shared-memory tests and example.
+[target.'cfg(unix)'.dev-dependencies]
+libc = "0.2"
+
+# Only compiled under `RUSTFLAGS="--cfg loom"` for model checking; never part
+# of a normal build, so the crate keeps its zero-dependency footprint.
+[target.'cfg(loom)'.dependencies]
+loom = "0.7"
+
+# Applies to every target. CI runs clippy with `-D warnings`, so each `warn`
+# below is enforcing there. Library-only restriction lints (no panics, no
+# `std`) are crate attributes in `src/lib.rs`.
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)', 'cfg(docsrs)', 'cfg(kani)'] }
+missing_docs = "warn"
+unsafe_op_in_unsafe_fn = "deny"
+rust_2018_idioms = { level = "warn", priority = -1 }
+missing_debug_implementations = "warn"
+trivial_casts = "warn"
+unused_qualifications = "warn"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+# Every unsafe block carries an adjacent `SAFETY:`
+# comment that justifies exactly the operations in it.
+undocumented_unsafe_blocks = "warn"
+multiple_unsafe_ops_per_block = "warn"
+unnecessary_safety_comment = "warn"
+unnecessary_safety_doc = "warn"
+# `#[inline(always)]` is deliberate on the data path: every use is checked
+# by the codegen audit (`cargo xtask inspect-codegen`), which is the right
+# arbiter, not a blanket heuristic.
+inline_always = "allow"
+# `p`/`c` (and `ping_p`/`pong_p`) for producer/consumer pairs is the naming
+# convention throughout the tests and benchmarks.
+many_single_char_names = "allow"
+similar_names = "allow"
+
+# docs.rs documents every feature and labels feature-gated items via
+# `doc_cfg` (enabled only under `--cfg docsrs`, never in normal builds).
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[[bench]]
+name = "spsc"
+harness = false
+required-features = ["alloc"]
+
+[[bench]]
+name = "latency"
+harness = false
+required-features = ["alloc"]
+
+[[example]]
+name = "shared_memory"
+required-features = ["shared-memory"]
+
+[profile.bench]
+debug = 1

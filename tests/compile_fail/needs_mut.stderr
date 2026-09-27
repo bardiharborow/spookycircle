@@ -1,0 +1,65 @@
+error[E0596]: cannot borrow `*p` as mutable, as it is behind a `&` reference
+ --> tests/compile_fail/needs_mut.rs:8:5
+  |
+8 |     p.try_push(1).ok();
+  |     ^ `p` is a `&` reference, so it cannot be borrowed as mutable
+  |
+help: consider changing this to be a mutable reference
+  |
+6 |     let p = &mut producer;
+  |              +++
+
+error[E0596]: cannot borrow `*p` as mutable, as it is behind a `&` reference
+ --> tests/compile_fail/needs_mut.rs:9:5
+  |
+9 |     p.push_slice(&[1, 2]);
+  |     ^ `p` is a `&` reference, so it cannot be borrowed as mutable
+  |
+help: consider changing this to be a mutable reference
+  |
+6 |     let p = &mut producer;
+  |              +++
+
+error[E0596]: cannot borrow `*c` as mutable, as it is behind a `&` reference
+  --> tests/compile_fail/needs_mut.rs:10:5
+   |
+10 |     c.try_pop();
+   |     ^ `c` is a `&` reference, so it cannot be borrowed as mutable
+   |
+help: consider changing this to be a mutable reference
+   |
+ 7 |     let c = &mut consumer;
+   |              +++
+
+error[E0596]: cannot borrow `*c` as mutable, as it is behind a `&` reference
+  --> tests/compile_fail/needs_mut.rs:11:5
+   |
+11 |     c.peek();
+   |     ^ `c` is a `&` reference, so it cannot be borrowed as mutable
+   |
+help: consider changing this to be a mutable reference
+   |
+ 7 |     let c = &mut consumer;
+   |              +++
+
+error[E0596]: cannot borrow `*c` as mutable, as it is behind a `&` reference
+  --> tests/compile_fail/needs_mut.rs:12:5
+   |
+12 |     c.peek_mut();
+   |     ^ `c` is a `&` reference, so it cannot be borrowed as mutable
+   |
+help: consider changing this to be a mutable reference
+   |
+ 7 |     let c = &mut consumer;
+   |              +++
+
+error[E0596]: cannot borrow `*c` as mutable, as it is behind a `&` reference
+  --> tests/compile_fail/needs_mut.rs:13:5
+   |
+13 |     c.pop_slice(&mut [0; 2]);
+   |     ^ `c` is a `&` reference, so it cannot be borrowed as mutable
+   |
+help: consider changing this to be a mutable reference
+   |
+ 7 |     let c = &mut consumer;
+   |              +++

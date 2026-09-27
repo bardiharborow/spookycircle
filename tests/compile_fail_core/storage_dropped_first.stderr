@@ -1,0 +1,11 @@
+error[E0597]: `storage` does not live long enough
+  --> tests/compile_fail_core/storage_dropped_first.rs:10:32
+   |
+ 9 |         let storage = StaticStorage::<String, 2>::new();
+   |             ------- binding `storage` declared here
+10 |         (producer, consumer) = storage.try_split().unwrap();
+   |                                ^^^^^^^ borrowed value does not live long enough
+11 |     }
+   |     - `storage` dropped here while still borrowed
+12 |     drop((producer, consumer));
+   |           -------- borrow later used here

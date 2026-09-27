@@ -1,0 +1,23 @@
+# Instruction counts from `cargo xtask inspect-codegen --update-baseline`.
+# rustc 1.98.1 (48a229cea 2026-09-01)
+codegen_consumer_len 4
+codegen_is_consumer_alive 5
+codegen_is_drained 11
+codegen_owned_try_pop 27
+codegen_owned_try_push 39
+codegen_peek 15
+codegen_peek_mut 15
+codegen_pop_slice 73
+codegen_producer_len 5
+codegen_push_slice 72
+codegen_shared_is_drained 11
+codegen_shared_try_pop 24
+codegen_shared_try_push 26
+codegen_static_try_pop 24
+codegen_static_try_push 26
+codegen_try_pop 24
+codegen_try_pop_into 25
+codegen_try_push 26
+codegen_wide_try_pop 38
+codegen_wide_try_pop_into 29
+codegen_wide_try_push 39

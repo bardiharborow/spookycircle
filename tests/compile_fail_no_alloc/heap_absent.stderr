@@ -1,0 +1,30 @@
+error[E0432]: unresolved imports `spookycircle::Consumer`, `spookycircle::Producer`, `spookycircle::bounded`
+ --> tests/compile_fail_no_alloc/heap_absent.rs:2:20
+  |
+2 | use spookycircle::{Consumer, Producer, bounded};
+  |                    ^^^^^^^^  ^^^^^^^^  ^^^^^^^ no `bounded` in the root
+  |                    |         |
+  |                    |         no `Producer` in the root
+  |                    no `Consumer` in the root
+  |
+note: found an item that was configured out
+ --> src/lib.rs
+  |
+  | #[cfg(feature = "alloc")]
+  |       ----------------- the item is gated behind the `alloc` feature
+  | pub use heap::{Consumer, Producer};
+  |                ^^^^^^^^
+note: found an item that was configured out
+ --> src/lib.rs
+  |
+  | #[cfg(feature = "alloc")]
+  |       ----------------- the item is gated behind the `alloc` feature
+  | pub use heap::{Consumer, Producer};
+  |                          ^^^^^^^^
+note: found an item that was configured out
+ --> src/lib.rs
+  |
+  | #[cfg(feature = "alloc")]
+  |       ----------------- the item is gated behind the `alloc` feature
+  | pub fn bounded<T>(capacity: usize) -> Result<(Producer<T>, Consumer<T>), CreateError> {
+  |        ^^^^^^^

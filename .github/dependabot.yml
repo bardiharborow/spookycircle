@@ -1,0 +1,21 @@
+version: 2
+updates:
+  # Root workspace (the library and xtask) and the standalone `ci/embedded`
+  # workspace, which has its own lockfile.
+  - package-ecosystem: cargo
+    directories:
+      - "/"
+      - "/ci/embedded"
+    schedule:
+      interval: weekly
+    groups:
+      cargo:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]

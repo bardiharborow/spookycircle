@@ -1,0 +1,7 @@
+error[E0515]: cannot return value referencing local variable `storage`
+ --> tests/compile_fail_core/borrowed_escapes_storage.rs:8:5
+  |
+7 |     let (producer, _consumer) = storage.try_split().unwrap();
+  |                                 ------- `storage` is borrowed here
+8 |     producer
+  |     ^^^^^^^^ returns a value referencing data owned by the current function
