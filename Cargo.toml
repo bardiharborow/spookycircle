@@ -17,6 +17,11 @@ alloc = []
 # Caller-owned shared-memory regions (`shared_memory` module). Does not
 # enable `alloc` or `std`.
 shared-memory = []
+# Experimental: software prefetch of upcoming slots: through `core::hint`
+# on every target where `build.rs` finds it (nightly, for now), otherwise
+# aarch64 only (`asm!`). Off by default so the codegen baselines are
+# unaffected.
+prefetch = []
 
 # Development tasks (`cargo xtask`); `ci/embedded` is its own workspace.
 [workspace]

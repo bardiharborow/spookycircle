@@ -56,6 +56,7 @@ use core::{cell::Cell, cmp::min, marker::PhantomData, mem::MaybeUninit, ptr::Non
 
 use crate::{
     error::{CreateError, Full},
+    prefetch,
     seq::Sequence,
     sync::{Ordering, UnsafeCell},
 };
@@ -627,6 +628,7 @@ impl<T, S: Sequence, L: Lifecycle<T, S>> RawProducer<T, S, L> {
         let next_tail = tail.advance(1);
         self.tail = next_tail;
         self.index = next_index(index, capacity);
+        prefetch::for_store(self.queue.slots, index, capacity);
         // Linearization point of success; publishes the slot write.
         S::store(self.queue.shared_tail(), next_tail, Ordering::Release);
         Ok(())

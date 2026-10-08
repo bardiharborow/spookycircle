@@ -360,6 +360,8 @@
 // docs.rs only (see `[package.metadata.docs.rs]`): label feature-gated items,
 // but not the internal `loom` model-checking cfg.
 #![cfg_attr(docsrs, feature(doc_cfg), doc(auto_cfg(hide(loom))))]
+// Set by `build.rs` when `core::hint`'s prefetches need the feature gate.
+#![cfg_attr(spookycircle_hint_prefetch_unstable, feature(hint_prefetch))]
 // Workspace-wide lints live in `Cargo.toml`. These apply to the library
 // only; tests and benchmarks may use `std`, `unwrap`, and indexing freely.
 #![warn(unreachable_pub)]
@@ -421,6 +423,7 @@ mod endpoint;
 mod sync;
 
 mod error;
+mod prefetch;
 #[cfg(feature = "alloc")]
 mod heap;
 mod raw;
