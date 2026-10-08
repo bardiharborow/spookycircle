@@ -40,7 +40,8 @@ use core::{mem::size_of, ptr::NonNull};
 
 /// Bytes ahead of the current slot to prefetch. On Apple M1, two 64-byte
 /// slots ahead beat 1024 bytes (3.5 to 5 times faster than no hint, against
-/// 2.6 to 3).
+/// 2.6 to 3). On Zen 3 (hinting every push), 64 to 256 performed alike on
+/// `u64` rings and 512 lost the benefit at capacity 2^20.
 const DISTANCE: usize = 128;
 
 /// Bytes between hints: a slot is hinted only if it is the first to start
@@ -48,8 +49,21 @@ const DISTANCE: usize = 128;
 /// are 128 bytes; measurements that favoured 64 over 128 there also had
 /// load hints on, so the choice is not settled. Only decides how often a
 /// hint is issued; a poor value costs redundant or missed hints, never
-/// correctness.
+/// correctness. Unused where [`EVERY_PUSH`] is set.
 const INTERVAL: usize = 64;
+
+/// Whether every push issues its hint, rather than only a slot starting a
+/// new [`INTERVAL`] block. On x86 (Zen 3, `benches/crossover.rs` across
+/// the producer/consumer speed balance) the per-push address test cost more
+/// than the redundant `prefetchw`s it saves: hinting every push took 0.61
+/// (capacity 1024) and 0.75 (2^20) of the unhinted time on `u64` rings,
+/// against 0.68 to 0.71 and 0.86 to 0.90 with the test. Neither choice moved
+/// `u8` rings, and for 64-byte slots the two coincide.
+///
+/// A further test, skipping hints whose target the producer could not prove
+/// free (in a full queue the target is about `step` past `head`, the next
+/// lines the consumer reads), was slower still, so there is none.
+const EVERY_PUSH: bool = cfg!(any(target_arch = "x86", target_arch = "x86_64"));
 
 /// Whether this build issues hints: with `prefetch` on, every target where
 /// `build.rs` found `core::hint`'s prefetches, and aarch64 otherwise
@@ -121,7 +135,7 @@ fn starts_interval<T>(slots: *mut T, index: usize) -> bool {
 #[inline(always)]
 pub(crate) fn for_store<T>(slots: NonNull<T>, index: usize, capacity: usize) {
     if let Some(target) = ahead::<T>(index, capacity)
-        && starts_interval(slots.as_ptr(), target)
+        && (EVERY_PUSH || starts_interval(slots.as_ptr(), target))
     {
         hint(slots.as_ptr(), target);
     }

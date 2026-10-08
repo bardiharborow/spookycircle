@@ -223,6 +223,7 @@ cargo bench --all-features --bench spsc         # throughput, all groups
 cargo bench --bench spsc -- baseline            # vs. rtrb
 cargo bench --bench latency                     # round-trip latency percentiles
 SPOOKYCIRCLE_BENCH_PIN=1 cargo bench --bench spsc -- two_thread
+SPOOKYCIRCLE_BENCH_PIN=1 cargo bench --bench crossover  # speed-balance sweep with regimes
 ```
 
 Groups: single-thread alternating push/pop, two-thread balanced,
@@ -238,7 +239,18 @@ Criterion writes results to `target/criterion/`.
 of queues and reports mean, p50, p90, p99, p99.9, p99.99, and max round-trip
 time (with an `rtrb` baseline), plus the timer's overhead and granularity.
 
-Both harnesses print a report header: compiler
+A balanced two-thread transfer settles into one of two regimes depending on
+which side is faster: near empty, with the `tail` line crossing cores
+several times per line of elements ("lockstep"), or with the producer ahead
+and each line crossing about once ("stream"); a consumer-limited queue sits
+near full. The regimes differ by up to about 3 times in throughput, and
+small per-element costs (code layout, a branch, a prefetch hint) can move an
+unbalanced benchmark between them, so treat single two-thread numbers with
+care. `benches/crossover.rs` adds calibrated work to one side at a time and
+reports, for each producer-minus-consumer cost, the throughput, the
+occupancy the consumer observed, and the regime.
+
+All three harnesses print a report header: compiler
 version (`rustc -vV`), target, CPU model, build flags, and affinity policy;
 capacity, element size, and sample count appear per result.
 

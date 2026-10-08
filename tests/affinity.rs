@@ -9,16 +9,14 @@ mod affinity;
 fn repeated_workers_can_leave_the_parents_cpu() {
     // Keep the test harness thread's affinity unchanged.
     std::thread::spawn(|| {
-        let ids = core_affinity::get_core_ids().expect("read CPU affinity");
-        if ids.len() < 2 {
+        let Some(parent) = affinity::pin_current_thread(1) else {
             return;
-        }
-        affinity::pin_current_thread(1);
-        assert_eq!(core_affinity::get_core_ids().unwrap(), vec![ids[1]]);
+        };
+        assert_eq!(core_affinity::get_core_ids().unwrap(), vec![parent]);
         for _ in 0..3 {
-            let cpu = ids[0];
             std::thread::spawn(move || {
-                affinity::pin_current_thread(0);
+                let cpu = affinity::pin_current_thread(0).expect("pinned");
+                assert_ne!(cpu, parent);
                 assert_eq!(core_affinity::get_core_ids().unwrap(), vec![cpu]);
             })
             .join()

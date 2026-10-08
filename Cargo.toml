@@ -90,6 +90,11 @@ name = "latency"
 harness = false
 required-features = ["alloc"]
 
+[[bench]]
+name = "crossover"
+harness = false
+required-features = ["alloc"]
+
 [[example]]
 name = "shared_memory"
 required-features = ["shared-memory"]
